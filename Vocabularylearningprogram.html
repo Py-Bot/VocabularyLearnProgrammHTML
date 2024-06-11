@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Learning Program</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .vocab-list, .quiz-section {
+            margin-top: 20px;
+        }
+        .vocab-item {
+            background-color: #f9f9f9;
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .delete-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        #quizContainer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vocabulary Learning Program</h1>
+        <div class="input-group">
+            <label for="word">Word:</label>
+            <input type="text" id="word" placeholder="Enter a word">
+        </div>
+        <div class="input-group">
+            <label for="translation">Translation:</label>
+            <input type="text" id="translation" placeholder="Enter the translation">
+        </div>
+        <button onclick="addVocab()">Add Vocabulary</button>
+        
+        <div class="vocab-list" id="vocabList">
+            <h2>Vocabularies:</h2>
+        </div>
+
+        <div class="quiz-section">
+            <button onclick="startQuiz()">Start Quiz</button>
+            <div id="quizContainer">
+                <p id="quizQuestion"></p>
+                <input type="text" id="quizAnswer" placeholder="Your Answer">
+                <button onclick="checkAnswer()">Check Answer</button>
+                <button onclick="nextQuestion()" style="display: none;" id="nextButton">Next</button>
+                <button onclick="exitQuiz()" id="exitButton">Exit</button>
+                <p id="quizFeedback"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vocabList = document.getElementById('vocabList');
+        let vocabArray = JSON.parse(localStorage.getItem('vocabList')) || [];
+        let currentVocabIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', (event) => {
+            loadVocab();
+        });
+
+        function addVocab() {
+            const word = document.getElementById('word').value;
+            const translation = document.getElementById('translation').value;
+
+            if (word === '' || translation === '') {
+                alert('Please fill in both fields.');
+                return;
+            }
+
+            const vocabItem = document.createElement('div');
+            vocabItem.className = 'vocab-item';
+            vocabItem.innerHTML = `${word} - ${translation} <button class="delete-btn" onclick="deleteVocab('${word}')">Delete</button>`;
+            vocabList.appendChild(vocabItem);
+
+            saveVocab(word, translation);
+
+            document.getElementById('word').value = '';
+            document.getElementById('translation').value = '';
+        }
+
+        function saveVocab(word, translation) {
+            vocabArray.push({ word: word, translation: translation });
+            localStorage.setItem('vocabList', JSON.stringify(vocabArray));
+        }
+
+        function loadVocab() {
+            vocabList.innerHTML = '<h2>Vocabularies:</h2>';
+            vocabArray.forEach(vocab => {
+                const vocabItem = document.createElement('div');
+                vocabItem.className = 'vocab-item';
+                vocabItem.innerHTML = `${vocab.word} - ${vocab.translation} <button class="delete-btn" onclick="deleteVocab('${vocab.word}')">Delete</button>`;
+                vocabList.appendChild(vocabItem);
+            });
+        }
+
+        function deleteVocab(word) {
+            vocabArray = vocabArray.filter(vocab => vocab.word !== word);
+            localStorage.setItem('vocabList', JSON.stringify(vocabArray));
+            loadVocab();
+        }
+
+        function startQuiz() {
+            if (vocabArray.length === 0) {
+                alert('No vocabularies available for quiz.');
+                return;
+            }
+            document.getElementById('vocabList').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            nextQuestion();
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('quizAnswer').value;
+            const correctAnswer = vocabArray[currentVocabIndex].translation;
+            if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                document.getElementById('quizFeedback').textContent = 'Correct!';
+            } else {
+                document.getElementById('quizFeedback').textContent = `Wrong! The correct answer is: ${correctAnswer}`;
+            }
+            document.getElementById('nextButton').style.display = 'inline';
+        }
+
+        function nextQuestion() {
+            currentVocabIndex = Math.floor(Math.random() * vocabArray.length);
+            document.getElementById('quizQuestion').textContent = `What is the translation for: ${vocabArray[currentVocabIndex].word}?`;
+            document.getElementById('quizAnswer').value = '';
+            document.getElementById('quizFeedback').textContent = '';
+            document.getElementById('nextButton').style.display = 'none';
+        }
+
+        function exitQuiz() {
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('vocabList').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
